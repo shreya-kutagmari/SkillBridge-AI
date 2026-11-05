@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}SkillBridge AI | Find your next opportunity{% endblock %}
+{% block content %}
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div>
+    <p class="eyebrow">CAREER ACCESS, MADE SMARTER</p>
+    <h1>Turn your skills into <span>opportunities.</span></h1>
+    <p class="lead">Discover relevant jobs, understand your skill gaps and take practical steps towards your next role — for free, locally, no sign-up required.</p>
+    <a class="button" href="/jobs" style="margin-right:10px">Explore opportunities</a>
+    <a class="button secondary" href="/dashboard">My dashboard</a>
+  </div>
+  <div class="hero-card">
+    <div class="orb">SB</div>
+    <h3 style="color:#fff;margin-bottom:4px">Your career bridge</h3>
+    <p>Upload resume &rarr; Match jobs &rarr; Close skill gaps &rarr; Apply</p>
+    <div class="mini-stat"><strong>{{ job_count }}</strong><span>demo opportunities</span></div>
+    <div class="mini-stat" style="border-top:none;margin-top:6px;padding-top:0"><strong>{{ app_count }}</strong><span>applications saved</span></div>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<div class="stats">
+  <div class="stat"><strong>{{ job_count }}</strong><span>Opportunities in demo dataset</span></div>
+  <div class="stat"><strong>{{ app_count }}</strong><span>Applications saved locally</span></div>
+  <div class="stat"><strong>2</strong><span>Languages: English &amp; Kannada</span></div>
+</div>
+
+<!-- ── Feature cards ── -->
+<section class="section">
+  <p class="eyebrow">GET STARTED</p>
+  <h2>Make your next move with clarity</h2>
+  <div class="cards" style="margin-top:18px">
+    <article class="card">
+      <div class="icon">&#128269;</div>
+      <h3>Match jobs to your skills</h3>
+      <p>Enter your skills and instantly see how well each role fits — with a transparent overlap score, not a black-box algorithm.</p>
+      <a href="/jobs#matcher">Try the matcher &rarr;</a>
+    </article>
+    <article class="card">
+      <div class="icon">&#128202;</div>
+      <h3>Upload your resume</h3>
+      <p>Drag-and-drop a PDF, DOCX or TXT file. SkillBridge extracts your skills automatically and shows the gaps for your target role.</p>
+      <a href="#resume-upload">Upload resume &rarr;</a>
+    </article>
+    <article class="card">
+      <div class="icon">&#127775;</div>
+      <h3>Get career guidance</h3>
+      <p>Ask the rule-based assistant for resume tips, interview preparation, skill roadmaps, and job search strategies in English or Kannada.</p>
+      <a href="#assistant">Ask assistant &rarr;</a>
+    </article>
+  </div>
+</section>
+
+<!-- ── Resume upload ── -->
+<section class="section tool-panel" id="resume-upload">
+  <div>
+    <p class="eyebrow">RESUME ANALYSIS</p>
+    <h2>Extract your skills automatically</h2>
+    <p class="muted">Upload a PDF, DOCX or TXT resume. Your file is processed locally on this server and is not shared externally. Do not upload sensitive personal information.</p>
+    <ul style="margin:12px 0 0 18px;font-size:13px;color:var(--muted);line-height:2">
+      <li>Supported formats: PDF, DOCX, TXT (max 5 MB)</li>
+      <li>Skills extracted from {{ job_count }} known technical and soft skills</li>
+      <li>Results pre-fill the job matcher automatically</li>
+    </ul>
+  </div>
+  <div>
+    <!-- Drop zone -->
+    <div class="upload-zone" id="uploadZone" role="button" aria-label="Click or drag a resume file here" tabindex="0">
+      <span class="upload-icon">&#128196;</span>
+      <strong>Click to browse or drag &amp; drop</strong>
+      <p>PDF, DOCX or TXT &middot; max 5 MB</p>
+    </div>
+    <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" style="display:none">
+    <div class="file-preview" id="filePreview" style="display:none"></div>
+    <div class="progress-bar" id="uploadProgress" style="display:none;margin-top:8px">
+      <div class="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="alert" id="uploadAlert"></div>
+    <button class="button" id="uploadResumeBtn" style="margin-top:10px">Analyse resume</button>
+
+    <!-- Results (hidden until upload succeeds) -->
+    <div id="resumeResults" style="display:none;margin-top:18px">
+      <div id="resumeAnalysis" style="display:none;margin-bottom:18px">
+  <h3>Resume Quality Score</h3>
+  <div id="resumeScore" style="font-size:32px;font-weight:700;color:var(--blue)">0/100</div>
+
+  <h4>Section Breakdown</h4>
+  <div id="resumeScoreBreakdown"></div>
+
+  <h4>Detected Sections</h4>
+  <div id="resumeDetectedSections"></div>
+
+  <h4>Missing Sections</h4>
+  <div id="resumeMissingSections"></div>
+
+  <h4>Improvement Suggestions</h4>
+  <ul id="resumeSuggestions"></ul>
+
+  <small id="resumeDisclaimer" style="color:var(--muted)"></small>
+</div>
+      <p class="eyebrow" style="margin-bottom:6px">EXTRACTED SKILLS</p>
+      <div class="skill-chips" id="extractedSkills"></div>
+      <details style="margin-top:14px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--blue)">Show resume text preview</summary>
+        <pre id="resumeTextPreview" style="display:none;margin-top:8px;font-size:12px;color:var(--muted);background:var(--pale);padding:12px;border-radius:8px;white-space:pre-wrap;max-height:220px;overflow-y:auto"></pre>
+      </details>
+      <p style="margin-top:12px;font-size:13px">
+        Skills pre-filled below &darr; — click <strong>Match jobs</strong> on the <a href="/jobs#matcher">jobs page</a> or go to your <a href="/dashboard">dashboard</a>.
+      </p>
+      <input id="skillsInput" style="display:none"><!-- hidden pre-fill target for matcher -->
+    </div>
+  </div>
+</section>
+
+<!-- ── Career assistant ── -->
+<section class="section tool-panel" id="assistant">
+  <div>
+    <p class="eyebrow">CAREER ASSISTANT</p>
+    <h2>Ask a career question</h2>
+    <p class="muted" style="margin-top:8px">Rule-based guidance in English and Kannada. Covers resume writing, interviews, skill gaps, job search, salary negotiation, and portfolio building.</p>
+    <p class="muted" style="margin-top:8px;font-size:12px">&#9432; Responses are transparent, hand-written guidance — not generated by a live AI model.</p>
+    <div style="margin-top:16px">
+      <p style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px">Try asking:</p>
+      <ul style="font-size:13px;color:var(--muted);line-height:2;padding-left:18px">
+        <li>How do I prepare for a technical interview?</li>
+        <li>What skills should I learn for data science?</li>
+        <li>How do I negotiate my salary?</li>
+        <li>Resume tips for freshers</li>
+      </ul>
+    </div>
+  </div>
+  <div class="assistant-box">
+    <div class="form-group">
+      <label for="language">Language</label>
+      <select id="language" style="width:auto;max-width:180px">
+        <option value="English">English</option>
+        <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="question">Your question</label>
+      <textarea id="question" placeholder="Example: How can I prepare for a Python developer interview?" rows="3"></textarea>
+    </div>
+    <button class="button" id="askAssistant">Get guidance</button>
+    <div id="assistantReply" class="result" aria-live="polite" style="min-height:48px"></div>
+  </div>
+</section>
+
+{% endblock %}

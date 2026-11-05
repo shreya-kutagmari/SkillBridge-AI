@@ -1,0 +1,343 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SkillBridge AI — Architecture &amp; Upgrade Plan</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.65; background: #ffffff; color: #1f2328; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 44px 28px 60px; }
+  h1 { font-size: 24px; font-weight: 700; color: #1f2328; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 36px; }
+  h2 { font-size: 16px; font-weight: 700; color: #1f2328; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+  h3 { font-size: 13px; font-weight: 700; color: #3b82d4; margin: 14px 0 5px; text-transform: uppercase; letter-spacing: .5px; }
+  p { margin-bottom: 8px; color: #1f2328; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+  code { font-family: "Cascadia Code", "Consolas", monospace; font-size: 12px; background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 3px; padding: 1px 5px; color: #c0392b; }
+
+  /* Arch grid */
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .arch-box { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; }
+  .arch-box .label { font-size: 10px; font-weight: 700; color: #57606a; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+  .arch-box .name { font-size: 13px; font-weight: 600; color: #1f2328; margin-bottom: 4px; }
+  .arch-box p { font-size: 12px; color: #57606a; margin: 0; }
+
+  /* Feature table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  th { background: #f7f8fa; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 2px solid #e5e7eb; color: #57606a; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge.exists { background: #d1fae5; color: #065f46; }
+  .badge.partial { background: #fef3c7; color: #92400e; }
+  .badge.missing { background: #fee2e2; color: #991b1b; }
+
+  /* Steps */
+  .steps { counter-reset: step; }
+  .step { display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start; }
+  .step-num { counter-increment: step; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #3b82d4; color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .step-num::before { content: counter(step); }
+  .step-body { flex: 1; }
+  .step-body strong { font-size: 14px; display: block; margin-bottom: 3px; }
+  .step-body .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+  .chip.new { background: #f0fdf4; color: #166534; }
+  .chip.upgrade { background: #fefce8; color: #713f12; }
+  .chip.infra { background: #f5f3ff; color: #5b21b6; }
+
+  /* Files changed */
+  .file-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .file-list li { font-size: 12px; padding: 5px 10px; background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; }
+  .file-list li .new-badge { float: right; font-size: 10px; font-weight: 700; color: #166534; background: #d1fae5; padding: 1px 6px; border-radius: 10px; }
+  .file-list li .mod-badge { float: right; font-size: 10px; font-weight: 700; color: #92400e; background: #fef3c7; padding: 1px 6px; border-radius: 10px; }
+
+  /* Preserve box */
+  .preserve { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 14px 16px; font-size: 13px; margin-bottom: 16px; }
+  .preserve strong { display: block; margin-bottom: 6px; color: #78350f; }
+
+  footer { text-align: center; font-size: 12px; color: #57606a; border-top: 1px solid #e5e7eb; margin-top: 48px; padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>SkillBridge AI</h1>
+  <p class="subtitle">Architecture Analysis &amp; Upgrade Plan · IBM Bob Better Bengaluru Challenge</p>
+
+  
+  <h2>1 · Existing Architecture</h2>
+  <p>The starter is a clean, single-file Flask monolith with three minimal rule-based agents and one utility. Every component works correctly and is the foundation everything new will build on.</p>
+
+  <div class="arch-grid">
+    <div class="arch-box">
+      <div class="label">Entry point</div>
+      <div class="name">app.py</div>
+      <p>Flask app, SQLite setup, 7 routes: <code>/</code>, <code>/jobs</code>, <code>/api/match</code>, <code>/api/skill-gap</code>, <code>/assistant</code>, <code>/resume</code>, <code>/apply/&lt;id&gt;</code>, <code>/tracker</code>, <code>/health</code></p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Database</div>
+      <div class="name">database.db (SQLite)</div>
+      <p>Two tables: <code>jobs</code> (id, title, company, location, job_type, skills, description) and <code>applications</code> (id, candidate_name, job_id, status, created_at)</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Agent 1</div>
+      <div class="name">agents/job_matcher.py</div>
+      <p>Set-intersection skill overlap scorer. Returns match %, matched skills, and missing skills. Sorted by descending score.</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Agent 2</div>
+      <div class="name">agents/skill_analyzer.py</div>
+      <p>Set-difference gap finder. Returns matched, missing, coverage %, and a flat list of "learn X" strings as roadmap.</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Agent 3</div>
+      <div class="name">agents/career_assistant.py</div>
+      <p>Keyword-rule reply generator. English and Kannada. Stubs: resume, interview, skills/learn/roadmap, and a generic fallback.</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Utility</div>
+      <div class="name">utils/resume_parser.py</div>
+      <p>Extracts text from PDF (<code>pypdf</code>), DOCX (<code>python-docx</code>), and TXT. Skill extraction by regex against 28 hardcoded known skills.</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Templates</div>
+      <div class="name">base / index / jobs / tracker</div>
+      <p>Jinja2 templates. <code>base.html</code> has sticky nav (Home, Explore Jobs, My Tracker). No resume-upload UI or dashboard yet.</p>
+    </div>
+    <div class="arch-box">
+      <div class="label">Frontend</div>
+      <div class="name">static/js/app.js + style.css</div>
+      <p>Vanilla JS with <code>fetch</code>. Handlers for job matcher and career assistant. Custom CSS design system with CSS variables.</p>
+    </div>
+  </div>
+
+  
+  <h2>2 · Feature Gap Assessment</h2>
+  <table>
+    <thead><tr><th>Required Feature</th><th>Status</th><th>Gap / Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Job matching</td><td><span class="badge partial">Partial</span></td><td>Works via API but no inline UI on the jobs page rendering matched scores; no weighted scoring or partial-match synonyms.</td></tr>
+      <tr><td>Resume upload &amp; skill extraction</td><td><span class="badge partial">Partial</span></td><td>Backend endpoint exists (<code>POST /resume</code>). No upload UI in templates; skill list is only 28 keywords.</td></tr>
+      <tr><td>AI skill-gap analysis</td><td><span class="badge partial">Partial</span></td><td>Logic exists but roadmap is a flat string per skill with no learning resource links, priority order, or timeline.</td></tr>
+      <tr><td>Personalized learning roadmaps</td><td><span class="badge missing">Missing</span></td><td>No roadmap agent, no structured output with resources/stages, no dedicated UI page.</td></tr>
+      <tr><td>English &amp; Kannada assistant</td><td><span class="badge partial">Partial</span></td><td>Two languages exist but Kannada is a single static string. No topic routing, no follow-up, no context memory.</td></tr>
+      <tr><td>Candidate dashboard</td><td><span class="badge missing">Missing</span></td><td>No <code>/dashboard</code> route, no profile, no aggregated view of skills + applications + roadmap.</td></tr>
+      <tr><td>Job application tracking</td><td><span class="badge exists">Exists</span></td><td>Tracker page works. Needs status update (Saved → Applied → Interviewing → Offered) and notes field.</td></tr>
+      <tr><td>Agentic AI architecture</td><td><span class="badge partial">Partial</span></td><td>3 agents exist but are plain functions with no orchestrator, no shared context, and no agent-to-agent handoff.</td></tr>
+      <tr><td>Candidate profiles / auth</td><td><span class="badge missing">Missing</span></td><td>No user table, no login/logout, no session, no candidate_id on applications.</td></tr>
+      <tr><td>Resume-to-match pipeline</td><td><span class="badge missing">Missing</span></td><td>Parsing and matching are disconnected — no single flow: upload → extract → match → gap → roadmap.</td></tr>
+    </tbody>
+  </table>
+
+  
+  <div class="preserve">
+    <strong>⚠ What must be preserved throughout all changes</strong>
+    <ul>
+      <li>All existing routes: <code>/</code>, <code>/jobs</code>, <code>/api/match</code>, <code>/api/skill-gap</code>, <code>/assistant</code>, <code>/resume</code>, <code>/apply/&lt;id&gt;</code>, <code>/tracker</code>, <code>/health</code></li>
+      <li>The <code>jobs</code> and <code>applications</code> SQLite tables and their existing columns</li>
+      <li>The 5 sample job seed rows</li>
+      <li>The existing CSS design system variables and responsive layout in <code>style.css</code></li>
+      <li>The <code>escapeHTML</code> / <code>postJSON</code> utilities in <code>app.js</code></li>
+      <li>The 4 current templates — each will be extended, not replaced</li>
+      <li>All existing agent function signatures (other modules import them)</li>
+    </ul>
+  </div>
+
+  
+  <h2>3 · Step-by-Step Implementation Plan</h2>
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Database schema upgrade — add users, profiles, notes &amp; status</strong>
+        <p>Extend <code>init_db()</code> in <code>app.py</code> to add: <code>candidates</code> table (id, name, email, created_at), <code>candidate_skills</code> (candidate_id, skill), and a <code>notes</code> + <code>status</code> column on <code>applications</code>. Use <code>ALTER TABLE … ADD COLUMN IF NOT EXISTS</code> so existing rows are untouched. Also add a <code>roadmaps</code> table (candidate_id, job_id, steps JSON, created_at).</p>
+        <div class="tag-row"><span class="chip upgrade">app.py</span><span class="chip upgrade">database.db</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Expand the skill vocabulary in <code>resume_parser.py</code></strong>
+        <p>Grow <code>KNOWN_SKILLS</code> from 28 to 80+ terms covering cloud, DevOps, data science, frontend, and soft skills. Add synonym normalization (e.g. "js" → "javascript"). This powers all downstream extraction immediately.</p>
+        <div class="tag-row"><span class="chip upgrade">utils/resume_parser.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Build a <code>roadmap_agent.py</code> — personalized learning roadmaps</strong>
+        <p>New agent in <code>agents/roadmap_agent.py</code>. Takes <code>missing_skills</code> list, returns structured JSON with: stage (Foundation / Intermediate / Advanced), skill, suggested resource type (video / practice / project), estimated days, and a short rationale. Hardcoded resource catalog initially (no external API needed). Returns ordered stages grouped by priority.</p>
+        <div class="tag-row"><span class="chip new">agents/roadmap_agent.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Upgrade <code>skill_analyzer.py</code> to use the roadmap agent</strong>
+        <p>Import <code>roadmap_agent</code> and replace the flat "Learn the basics of X" list with structured roadmap steps. Keep the same function signature so no routes break. Add a <code>priority_order</code> field that sorts missing skills by job-market demand weight.</p>
+        <div class="tag-row"><span class="chip upgrade">agents/skill_analyzer.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Upgrade <code>career_assistant.py</code> — richer English + full Kannada routing</strong>
+        <p>Replace the single static Kannada string with a topic-routing table mirroring the English rules (resume, interview, skills, roadmap, greeting, fallback) — all in Kannada. Add new English topics: salary negotiation, portfolio advice, LinkedIn profile. Keep the same <code>career_reply(message, language)</code> signature.</p>
+        <div class="tag-row"><span class="chip upgrade">agents/career_assistant.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Add an orchestrator agent — <code>agents/orchestrator.py</code></strong>
+        <p>A thin coordinator that accepts a <code>pipeline_request</code> dict and routes to the right sequence of agents: resume upload → skill extraction → job matching → skill-gap analysis → roadmap generation. Returns a unified <code>pipeline_result</code> dict. No circular imports; agents remain independent. This is the "agentic AI" architecture layer.</p>
+        <div class="tag-row"><span class="chip new">agents/orchestrator.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>New Flask routes: <code>/dashboard</code>, <code>/api/roadmap</code>, <code>/api/pipeline</code>, <code>/application/&lt;id&gt;/status</code></strong>
+        <p><code>/dashboard</code> shows candidate name, extracted skills, saved applications, and active roadmaps in one view. <code>/api/roadmap</code> accepts current + required skills and returns full structured roadmap. <code>/api/pipeline</code> runs the full orchestrator end-to-end from uploaded resume. <code>/application/&lt;id&gt;/status</code> is a PATCH endpoint to update status and notes.</p>
+        <div class="tag-row"><span class="chip upgrade">app.py</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Resume upload UI — new section in <code>index.html</code></strong>
+        <p>Add a "Upload your resume" card with a file-picker (<code>accept=".pdf,.docx,.txt"</code>), a submit button, and a result panel that shows extracted skills as chips, a match preview against the top job, and a "Run full analysis" button. The panel is revealed progressively via JS fetch to <code>POST /resume</code>.</p>
+        <div class="tag-row"><span class="chip upgrade">templates/index.html</span><span class="chip upgrade">static/js/app.js</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>New template: <code>templates/dashboard.html</code></strong>
+        <p>Candidate dashboard with four panels: (1) Skill profile — chips for each extracted skill. (2) Top matched jobs — top 3 with scores. (3) Active learning roadmap — stage-by-stage visual checklist. (4) Application pipeline — kanban-style status columns (Saved / Applied / Interviewing / Offered). All data injected server-side via the <code>/dashboard</code> route.</p>
+        <div class="tag-row"><span class="chip new">templates/dashboard.html</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>New template: <code>templates/roadmap.html</code></strong>
+        <p>Standalone roadmap page. Takes a job title and candidate skills from query params, calls <code>/api/roadmap</code> on load, renders an ordered step-by-step learning path with stage labels, estimated days, and resource type icons. Linked from job cards and the dashboard.</p>
+        <div class="tag-row"><span class="chip new">templates/roadmap.html</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Upgrade <code>tracker.html</code> — editable status &amp; notes</strong>
+        <p>Add inline status dropdowns (Saved / Applied / Interviewing / Offered / Rejected) and a notes textarea per application row. Submits via <code>fetch PATCH /application/&lt;id&gt;/status</code> on change. Add per-status colour badges matching the dashboard kanban colours.</p>
+        <div class="tag-row"><span class="chip upgrade">templates/tracker.html</span><span class="chip upgrade">static/js/app.js</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Extend nav and CSS — add Dashboard, Resume, Roadmap links</strong>
+        <p>Add "Dashboard" and "Roadmap" links to <code>base.html</code> nav. Extend <code>style.css</code> with: roadmap stage cards, skill chip styles, kanban status columns, dashboard grid, and progress bars — all using the existing CSS variable system (<code>--blue</code>, <code>--ink</code>, etc.).</p>
+        <div class="tag-row"><span class="chip upgrade">templates/base.html</span><span class="chip upgrade">static/css/style.css</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Update <code>requirements.txt</code> and <code>README.md</code></strong>
+        <p>No new external pip packages are required — the upgrade uses only Flask, Werkzeug, pypdf, and python-docx already installed. Update <code>README.md</code> with new routes, features, and setup notes.</p>
+        <div class="tag-row"><span class="chip upgrade">README.md</span><span class="chip upgrade">requirements.txt</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  
+  <h2>4 · Complete File Change Inventory</h2>
+  <h3>New files</h3>
+  <ul class="file-list">
+    <li><code>agents/orchestrator.py</code> <span class="new-badge">NEW</span></li>
+    <li><code>agents/roadmap_agent.py</code> <span class="new-badge">NEW</span></li>
+    <li><code>templates/dashboard.html</code> <span class="new-badge">NEW</span></li>
+    <li><code>templates/roadmap.html</code> <span class="new-badge">NEW</span></li>
+  </ul>
+  <h3>Modified files</h3>
+  <ul class="file-list">
+    <li><code>app.py</code> — schema upgrade, 4 new routes <span class="mod-badge">MODIFIED</span></li>
+    <li><code>agents/skill_analyzer.py</code> — structured roadmap integration <span class="mod-badge">MODIFIED</span></li>
+    <li><code>agents/career_assistant.py</code> — full Kannada topic routing + new English topics <span class="mod-badge">MODIFIED</span></li>
+    <li><code>utils/resume_parser.py</code> — 80+ skill vocabulary + synonyms <span class="mod-badge">MODIFIED</span></li>
+    <li><code>templates/base.html</code> — nav links expanded <span class="mod-badge">MODIFIED</span></li>
+    <li><code>templates/index.html</code> — resume upload UI section <span class="mod-badge">MODIFIED</span></li>
+    <li><code>templates/tracker.html</code> — status dropdown + notes <span class="mod-badge">MODIFIED</span></li>
+    <li><code>static/js/app.js</code> — resume upload handler, status update, roadmap fetch <span class="mod-badge">MODIFIED</span></li>
+    <li><code>static/css/style.css</code> — dashboard, roadmap, chip, kanban styles <span class="mod-badge">MODIFIED</span></li>
+    <li><code>README.md</code> — updated feature list and routes <span class="mod-badge">MODIFIED</span></li>
+  </ul>
+
+  
+  <h2>5 · Target Architecture Diagram</h2>
+  <pre style="background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:16px;font-size:11px;line-height:1.7;overflow-x:auto">
+Browser
+  │
+  ├── GET /dashboard          → dashboard.html  ←─ orchestrator pipeline result
+  ├── GET /jobs               → jobs.html
+  ├── GET /tracker            → tracker.html
+  ├── GET /roadmap            → roadmap.html
+  │
+  ├── POST /resume            → resume_parser ──────────────────┐
+  ├── POST /api/match         → job_matcher                     │
+  ├── POST /api/skill-gap     → skill_analyzer ──→ roadmap_agent│
+  ├── POST /api/roadmap       → roadmap_agent                   │
+  ├── POST /api/pipeline      → orchestrator ───────────────────┘
+  ├── POST /assistant         → career_assistant (EN + KN)
+  ├── POST /apply/&lt;id&gt;        → applications table
+  └── PATCH /application/&lt;id&gt;/status → applications table
+
+Orchestrator (agents/orchestrator.py)
+  └── calls: resume_parser → job_matcher → skill_analyzer → roadmap_agent
+  └── returns: unified pipeline_result dict
+
+SQLite (database.db)
+  ├── jobs
+  ├── applications  (+ status, notes columns)
+  ├── candidates
+  ├── candidate_skills
+  └── roadmaps
+  </pre>
+
+  
+  <h2>6 · Recommended Execution Order for IBM Bob</h2>
+  <ol>
+    <li><strong>Steps 1–2</strong> — DB schema + skill vocabulary (zero UI risk, all additive)</li>
+    <li><strong>Steps 3–4</strong> — New roadmap agent + skill analyzer upgrade (pure Python, no template changes)</li>
+    <li><strong>Step 5</strong> — Career assistant Kannada expansion</li>
+    <li><strong>Step 6</strong> — Orchestrator agent</li>
+    <li><strong>Step 7</strong> — New Flask routes in app.py</li>
+    <li><strong>Steps 8–10</strong> — Frontend templates (index resume UI, dashboard, roadmap page)</li>
+    <li><strong>Step 11</strong> — Tracker upgrade</li>
+    <li><strong>Step 12</strong> — Nav + CSS extensions</li>
+    <li><strong>Step 13</strong> — README + requirements final update</li>
+  </ol>
+  <p style="margin-top:10px;color:#57606a;font-size:13px">Each step is independently testable. Steps 1–6 have no frontend surface — run <code>python app.py</code> + hit the API with curl/Postman to verify before touching templates.</p>
+
+</div>
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

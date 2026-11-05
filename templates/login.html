@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Log in | SkillBridge AI{% endblock %}
+{% block content %}
+<div style="max-width:400px;margin:56px auto">
+  <div class="card">
+    <p class="eyebrow" style="margin-bottom:6px">WELCOME BACK</p>
+    <h2 style="margin-top:0">Log in</h2>
+    <p class="muted" style="margin-bottom:20px">Access your dashboard, applications and learning roadmap.</p>
+
+    <form method="post" action="/login" novalidate>
+      {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+      <div class="form-group" style="margin-bottom:12px">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email"
+               placeholder="you@example.com" required maxlength="200"
+               value="{{ request.form.get('email', '') }}" autocomplete="email">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password"
+               placeholder="Your password" required autocomplete="current-password">
+      </div>
+      <button class="button" type="submit" style="width:100%;justify-content:center;margin-top:0">
+        Log in
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+      New here? <a href="/register">Create an account</a>
+    </p>
+    <p style="text-align:center;margin-top:6px;font-size:12px;color:var(--muted)">
+      You can also use the app <a href="/">without an account</a> — login enables personal data tracking only.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Application tracker | SkillBridge AI{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <p class="eyebrow">YOUR PROGRESS</p>
+  <h1>Application tracker</h1>
+  <p class="lead">Track every application from saved to offered. Update status and add notes directly from each card.</p>
+</section>
+
+{% if applications %}
+
+{# ── Build status columns ── #}
+{% set statuses = ['Saved', 'Applied', 'Interviewing', 'Offered', 'Rejected'] %}
+
+{# Group applications by status #}
+{% set ns = namespace(cols={}) %}
+{% for s in statuses %}
+  {% set ns.cols = ns.cols.update({s: []}) or ns.cols %}
+{% endfor %}
+
+{# Since Jinja2 can't mutate dicts in loops cleanly, we filter inline below #}
+
+<p class="muted" style="margin-bottom:4px">
+  <strong>{{ applications|length }}</strong> application(s) saved &middot;
+  <a href="/jobs">Add more &rarr;</a>
+</p>
+
+<div class="kanban">
+  {% for status in statuses %}
+  {% set col_apps = applications | selectattr('status', 'equalto', status) | list %}
+  <div class="kanban-col col-{{ status | lower | replace(' ', '-') }}">
+    <div class="kanban-col-header">
+      <span>{{ status }}</span>
+      <span class="kbadge" style="background:var(--pale);color:var(--blue)">{{ col_apps | length }}</span>
+    </div>
+
+    {# Cards in this column #}
+    {% for item in col_apps %}
+    <div class="kanban-card" data-app-id="{{ item['id'] }}">
+      <h4>{{ item['title'] }}</h4>
+      <p class="kco">{{ item['company'] }}</p>
+      <p class="kco">{{ item['candidate_name'] }}</p>
+      <p class="kdate">{{ item['created_at'][:10] }}</p>
+
+      {# Status action buttons (move to another column) #}
+      <div class="kanban-actions">
+        {% for target_status in statuses %}
+          {% if target_status != status %}
+          <button class="kbtn status-btn"
+                  data-app-id="{{ item['id'] }}"
+                  data-status="{{ target_status }}">
+            {{ target_status }}
+          </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {# Notes field #}
+      <textarea class="knotes"
+                id="notes-{{ item['id'] }}"
+                placeholder="Add notes…"
+                aria-label="Notes for {{ item['title'] }}">{{ item['notes'] or '' }}</textarea>
+
+      {# Save notes button #}
+      <button class="kbtn status-btn" style="margin-top:6px;width:100%;text-align:center"
+              data-app-id="{{ item['id'] }}"
+              data-status="{{ status }}">
+        Save notes
+      </button>
+
+      {# Per-card feedback #}
+      <div class="alert" id="feedback-{{ item['id'] }}" style="margin-top:6px"></div>
+    </div>
+    {% endfor %}
+
+    {% if col_apps | length == 0 %}
+    <p style="font-size:12px;color:var(--muted);text-align:center;padding:12px 0">No applications here yet</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<p class="muted" style="margin-top:18px;font-size:12px">
+  &#9432; Status changes take effect immediately via the API. Notes are saved when you click "Save notes".
+  All data is stored locally in this demo's SQLite database and is not sent to any external service.
+</p>
+
+{% else %}
+<div class="empty">
+  <h3>No saved applications yet</h3>
+  <p style="margin-top:8px">Browse the job listings and click <strong>Save application</strong> to start tracking your progress.</p>
+  <a class="button" href="/jobs" style="margin-top:14px">Explore jobs</a>
+</div>
+{% endif %}
+
+{% endblock %}

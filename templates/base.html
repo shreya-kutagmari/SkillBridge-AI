@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SkillBridge AI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">SkillBridge<span>AI</span></a>
+  <nav>
+    <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a>
+    <a href="/jobs" {% if request.path.startswith('/jobs') %}class="active"{% endif %}>Explore jobs</a>
+    <a href="/dashboard" {% if request.path == '/dashboard' %}class="active"{% endif %}>Dashboard</a>
+    <a href="/tracker" {% if request.path == '/tracker' %}class="active"{% endif %}>My tracker</a>
+    {% if session.get('user_id') %}
+      <a href="/my-roadmaps" {% if request.path == '/my-roadmaps' %}class="active"{% endif %} style="font-size:13px">My roadmaps</a>
+      <span style="font-size:13px;color:var(--muted);padding:6px 8px">Hi, {{ session.get('display_name', '') }}</span>
+      <a href="/logout" style="font-size:13px">Log out</a>
+    {% else %}
+      <a href="/login">Log in</a>
+      <a href="/register" style="background:var(--blue);color:#fff;border-radius:8px;padding:6px 11px">Register</a>
+    {% endif %}
+    <button class="lang-btn" data-lang="en" title="Switch to English">EN</button>
+    <button class="lang-btn" data-lang="kn" title="ಕನ್ನಡಕ್ಕೆ ಬದಲಿಸಿ">KN</button>
+  </nav>
+</header>
+<main class="container" role="main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}" role="alert">
+          {{ message }}
+          <button type="button" class="flash-dismiss" onclick="this.parentElement.style.display='none'" aria-label="Dismiss notification">&#215;</button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer style="text-align:center;color:var(--muted);border-top:1px solid var(--line);padding:24px;font-size:12px">
+  SkillBridge AI &middot; Student prototype for the IBM Bob Better Bengaluru Challenge &middot;
+  <a href="/privacy" style="color:var(--muted)">Privacy notice</a> &middot;
+  <span style="color:#aaa">Job listings are fictional demo data — not real vacancies.</span>
+</footer>
+
+<!-- ── Consent banner (shown once; dismissed to localStorage) ── -->
+<div id="consentBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#17243a;color:#fff;padding:14px 24px;font-size:13px;z-index:200;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+  <span>
+    This demo stores session data locally. No personal data is shared externally.
+    <a href="/privacy" style="color:#93c5fd;margin-left:4px">Privacy notice</a>
+  </span>
+  <button id="consentOk" style="background:#315ce8;border:none;color:#fff;padding:7px 16px;border-radius:8px;cursor:pointer;font:600 13px/1 sans-serif">Got it</button>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body></html>

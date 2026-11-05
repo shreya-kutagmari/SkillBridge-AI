@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Privacy Notice | SkillBridge AI{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">TRANSPARENCY</p>
+  <h1>Privacy Notice</h1>
+  <p class="lead">SkillBridge AI is a student prototype for the IBM Bob Better Bengaluru Challenge. This notice explains what data is collected and how it is used.</p>
+</section>
+
+<div style="max-width:720px">
+
+<div class="card" style="margin-bottom:16px">
+  <h3>1. What this application is</h3>
+  <p>SkillBridge AI is a demonstration prototype — not a production employment platform. Job listings are <strong>fictional sample data</strong> for testing only. They are not real vacancies and are not affiliated with the named companies.</p>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>2. Data collected</h3>
+  <ul style="margin-top:8px;line-height:2;padding-left:18px;font-size:14px">
+    <li><strong>Account data</strong> (when you register): email address, display name, hashed password, and the date you gave consent. Passwords are hashed using PBKDF2-SHA256 and never stored in plain text.</li>
+    <li><strong>Application records</strong>: job titles, company names, and status notes you save in the tracker.</li>
+    <li><strong>Resume files</strong>: PDF, DOCX, or TXT files you upload. These are saved in the <code>uploads/</code> directory on the server running this demo.</li>
+    <li><strong>Extracted skills</strong>: text parsed from your resume by keyword matching — no external service is called.</li>
+    <li><strong>Session cookie</strong>: a signed, HTTP-only session cookie is set on login. It contains your user ID only, not personal data.</li>
+  </ul>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>3. How resume files are processed</h3>
+  <p>Resume text is extracted locally on the server using open-source Python libraries (<code>pypdf</code> and <code>python-docx</code>). Skills are identified by keyword matching against a fixed vocabulary list.</p>
+  <p style="margin-top:8px">If IBM watsonx.ai credentials are configured, resume text may be split into chunks and embedded using the <strong>ibm/granite-embedding-278m-multilingual</strong> model to enable context-aware career guidance. Embeddings are stored in the local SQLite database and are never sent to any third party other than IBM watsonx.ai when the feature is enabled.</p>
+  <p style="margin-top:8px"><strong>Do not upload resumes containing sensitive personal information</strong> (national ID numbers, bank details, medical history) to this demo deployment.</p>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>4. AI processing</h3>
+  <p>When IBM watsonx.ai credentials are configured, career guidance questions may be sent to the <strong>ibm/granite-4-h-small</strong> foundation model hosted on IBM Cloud. Without credentials, all responses come from the built-in rule-based system — no external API is called.</p>
+  <p style="margin-top:8px">The assistant never claims qualifications, salaries, or job offers on your behalf. All AI-generated text is advisory only.</p>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>5. Data storage and retention</h3>
+  <p>All data (accounts, applications, resume chunks) is stored in a local SQLite database file (<code>database.db</code>) on the server running this demo. No data is sent to external databases or analytics services.</p>
+  <p style="margin-top:8px">This is a demonstration prototype — there is no automated data retention or deletion policy. Treat this application as a local development tool.</p>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>6. Cookies and browser storage</h3>
+  <ul style="margin-top:8px;line-height:2;padding-left:18px;font-size:14px">
+    <li><strong>Session cookie</strong>: set on login, cleared on logout. Contains only a signed user ID.</li>
+    <li><strong>Language preference</strong> (<code>sb_lang</code>): stored in <code>localStorage</code> to remember your EN/KN choice. No personal data.</li>
+    <li><strong>Consent acknowledgement</strong> (<code>sb_consent</code>): stored in <code>localStorage</code> to suppress the consent banner after the first visit.</li>
+    <li>No tracking cookies, advertising cookies, or third-party analytics are used.</li>
+  </ul>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>7. How to delete your data</h3>
+  <p>Since this is a local demo, you or the system administrator can delete all data by removing the <code>database.db</code> file and the <code>uploads/</code> directory. There is no in-app account deletion UI in this prototype version.</p>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <h3>8. Contact</h3>
+  <p>This application was built as a student project for the IBM Bob Better Bengaluru Challenge. For questions about this prototype, raise an issue on the project's GitHub repository.</p>
+</div>
+
+<p class="muted" style="font-size:12px;margin-top:8px">Last updated: November 2026. This notice applies to the SkillBridge AI prototype only.</p>
+
+</div>
+{% endblock %}

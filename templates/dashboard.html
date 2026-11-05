@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | SkillBridge AI{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <p class="eyebrow">CANDIDATE DASHBOARD</p>
+  <h1>Welcome, {{ candidate_name }}</h1>
+  <p class="lead">Your personalised career snapshot — enter your skills below to activate matching, gap analysis and your learning roadmap.</p>
+</section>
+
+{# ── No skills yet: entry form ── #}
+{% if not candidate_skills %}
+<div class="tool-panel" style="margin-top:0">
+  <div>
+    <p class="eyebrow">GET STARTED</p>
+    <h2>Enter your skills to activate the dashboard</h2>
+    <p class="muted">Comma-separated list, e.g. <em>Python, SQL, Flask, Git</em></p>
+    <p class="muted" style="margin-top:8px;font-size:12px">
+      Or <a href="/#resume-upload">upload your resume</a> on the home page — skills are extracted automatically.
+    </p>
+  </div>
+  <form method="get" action="/dashboard">
+    <div class="form-group" style="margin-bottom:10px">
+      <label for="nameInput">Your name (optional)</label>
+      <input id="nameInput" name="name" placeholder="Ravi Kumar"
+             value="{{ candidate_name if candidate_name != 'Candidate' else '' }}">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label for="skillsInput">Your skills</label>
+      <input id="skillsInput" name="skills" placeholder="Python, SQL, Git, HTML, Communication">
+    </div>
+    <button class="button" type="submit">Load dashboard</button>
+  </form>
+</div>
+
+{% else %}
+
+{# ── Stats row ── #}
+<div class="stats">
+  <div class="stat">
+    <strong>{{ candidate_skills|length }}</strong>
+    <span>Skills detected</span>
+  </div>
+  <div class="stat">
+    <strong>{{ top_matches|length }}</strong>
+    <span>Top job matches</span>
+  </div>
+  <div class="stat">
+    <strong>{{ recent_apps|length }}</strong>
+    <span>Recent applications</span>
+  </div>
+</div>
+
+{# ── Main 2-column layout ── #}
+<div class="dash-grid">
+
+  {# ── Left sidebar ── #}
+  <aside class="dash-sidebar">
+
+    {# Skill profile card #}
+    <div class="dash-card">
+      <h3>Your skills</h3>
+      <div class="skill-chips">
+        {% for skill in candidate_skills %}
+          <span class="chip chip-skill">{{ skill }}</span>
+        {% endfor %}
+      </div>
+      <p class="muted" style="margin-top:10px;font-size:12px">
+        <a href="/dashboard">Update skills</a> &middot;
+        <a href="/#resume-upload">Re-upload resume</a>
+      </p>
+    </div>
+
+    {# Coverage meter for top match #}
+    {% if pipeline_result %}
+      {% set gap_stage = pipeline_result.stages[2] %}
+      {% if gap_stage.status == 'ok' and gap_stage.gap %}
+      <div class="dash-card">
+        <h3>Coverage for top role</h3>
+        <p style="font-size:13px;margin-bottom:4px">{{ gap_stage.job_title }}</p>
+        {% set cov = gap_stage.gap.coverage %}
+        <p style="font: 700 22px Manrope; color:
+          {% if cov >= 75 %}var(--green){% elif cov >= 40 %}var(--amber){% else %}var(--red){% endif %}">
+          {{ cov }}%
+        </p>
+        <div class="coverage-bar-bg">
+          <div class="coverage-bar-fill
+            {% if cov >= 75 %}coverage-high{% elif cov >= 40 %}coverage-mid{% else %}coverage-low{% endif %}"
+            style="width:{{ cov }}%"></div>
+        </div>
+        <p class="muted" style="font-size:12px;margin-top:6px">{{ gap_stage.gap.summary }}</p>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {# Pipeline explainer #}
+    {% if pipeline_result %}
+    <details class="pipeline-details">
+      <summary>How the pipeline works</summary>
+      <p style="margin-top:8px">SkillBridge runs a 4-stage analysis pipeline:</p>
+      <ol>
+        {% for stage in pipeline_result.stages %}
+        <li><strong>{{ stage.stage }}</strong>: {{ stage.explanation }}</li>
+        {% endfor %}
+      </ol>
+      <p class="muted" style="margin-top:8px;font-size:11px">
+        All scores are based on skill-keyword overlap — not an AI hiring decision.
+        No external model is called.
+      </p>
+    </details>
+    {% endif %}
+
+  </aside>
+
+  {# ── Main content ── #}
+  <div class="dash-main">
+
+    {# Top job matches #}
+    {% if top_matches %}
+    <div class="dash-card">
+      <h3>Top job matches</h3>
+      <p class="muted" style="font-size:12px;margin-bottom:12px">
+        Scores show skill overlap with each role's requirements — not a hiring decision.
+      </p>
+      <div class="job-list">
+        {% for job in top_matches %}
+        <article class="job-card">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <span class="tag">{{ job.job_type }}</span>
+              <h3 style="margin:0">{{ job.title }}</h3>
+            </div>
+            <p class="muted" style="font-size:13px;margin-top:2px">{{ job.company }} &middot; {{ job.location }}</p>
+            <div class="match-pills" style="margin-top:6px">
+              {% for s in job.matched_skills %}
+                <span class="pill pill-match">{{ s }}</span>
+              {% endfor %}
+              {% for s in job.missing_skills %}
+                <span class="pill pill-miss">{{ s }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div style="text-align:center;min-width:65px">
+            <div class="score-ring {% if job.score >= 75 %}ring-high{% elif job.score >= 40 %}ring-mid{% else %}ring-low{% endif %}">
+              {{ job.score }}%
+            </div>
+            <p style="font-size:11px;color:var(--muted);margin-top:2px">match</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <a class="button secondary sm" href="/jobs">See all {{ pipeline_result.stages[1].matches|length }} matches</a>
+        <a class="button ghost sm" href="/jobs#matcher">Refine skills</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Learning roadmap for top match #}
+    {% if pipeline_result %}
+      {% set rm_stage = pipeline_result.stages[3] %}
+      {% set gap_stage = pipeline_result.stages[2] %}
+      {% if rm_stage.status == 'ok' and rm_stage.roadmap and rm_stage.roadmap.ordered_steps %}
+    <div class="dash-card">
+      <h3>Learning roadmap</h3>
+      <p style="font-size:13px;margin-bottom:4px">
+        Close the gap for <strong>{{ gap_stage.job_title }}</strong> at {{ gap_stage.job_company }}
+      </p>
+      <p class="muted" style="font-size:12px;margin-bottom:12px">
+        {{ rm_stage.roadmap.total_skills }} skill(s) &middot; ~{{ rm_stage.roadmap.total_est_days }} days estimated
+      </p>
+      <div class="roadmap-list">
+        {% for step in rm_stage.roadmap.ordered_steps %}
+        <div class="roadmap-step">
+          <div class="roadmap-step-header">
+            <span class="stage-badge stage-{{ step.stage | lower }}">{{ step.stage }}</span>
+            <strong>{{ step.skill }}</strong>
+            <span class="muted" style="margin-left:auto;font-size:12px">~{{ step.est_days }} days</span>
+          </div>
+          <div class="roadmap-step-body">
+            <p><strong>Resource:</strong> {{ step.resource_type }} &mdash; {{ step.resource_hint }}</p>
+            <p><strong>Exercise:</strong> {{ step.exercise }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+      {% elif gap_stage.status == 'ok' and gap_stage.gap and gap_stage.gap.coverage == 100 %}
+    <div class="dash-card" style="background:var(--green-bg);border-color:var(--green-border)">
+      <h3 style="color:var(--green)">All skills matched!</h3>
+      <p>You already have all the required skills for <strong>{{ gap_stage.job_title }}</strong>. Time to apply!</p>
+      <a class="button" href="/jobs" style="margin-top:10px">Browse jobs and apply</a>
+    </div>
+      {% endif %}
+    {% endif %}
+
+    {# Recent applications #}
+    {% if recent_apps %}
+    <div class="dash-card">
+      <h3>Recent applications</h3>
+      <div class="job-list" style="gap:8px">
+        {% for app in recent_apps %}
+        <article style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)">
+          <div style="flex:1">
+            <strong style="font-size:14px">{{ app['title'] }}</strong>
+            <p class="muted" style="font-size:12px">{{ app['company'] }} &middot; {{ app['candidate_name'] }}</p>
+          </div>
+          <span class="tag status-{{ app['status'] | lower | replace(' ', '-') }}">{{ app['status'] }}</span>
+          <span class="muted" style="font-size:11px">{{ app['created_at'][:10] }}</span>
+        </article>
+        {% endfor %}
+      </div>
+      <a class="button secondary sm" href="/tracker" style="margin-top:12px">Full application tracker</a>
+    </div>
+    {% endif %}
+
+  </div>{# end dash-main #}
+</div>{# end dash-grid #}
+
+{# ── Update skills form at bottom ── #}
+<div style="margin-top:24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:18px">
+  <p class="eyebrow" style="margin-bottom:8px">UPDATE YOUR SKILLS</p>
+  <form method="get" action="/dashboard" class="form-row">
+    <input name="name" value="{{ candidate_name if candidate_name != 'Candidate' else '' }}"
+           placeholder="Your name" style="max-width:180px">
+    <input name="skills" value="{{ skills_param }}" placeholder="Python, SQL, Flask…" style="flex:1">
+    <button class="button" type="submit" style="margin-top:0">Refresh</button>
+  </form>
+</div>
+
+{% endif %}{# end if candidate_skills #}
+{% endblock %}

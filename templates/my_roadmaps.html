@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My Roadmaps | SkillBridge AI{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <p class="eyebrow">YOUR LEARNING PATH</p>
+  <h1>My saved roadmaps</h1>
+  <p class="lead">A history of the skill-gap roadmaps generated for your profile.</p>
+</section>
+
+{% if roadmaps %}
+<p class="muted" style="margin-bottom:16px">
+  <strong>{{ roadmaps|length }}</strong> roadmap(s) saved
+</p>
+
+<div class="job-list">
+  {% for rm in roadmaps %}
+  <article class="job-card" style="flex-direction:column;align-items:flex-start;gap:6px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="tag">Roadmap #{{ rm['id'] }}</span>
+      <strong>{{ rm['job_title'] or 'General roadmap' }}</strong>
+    </div>
+    {% if rm['missing_skills'] %}
+    <p style="font-size:13px;color:var(--muted)">
+      Skills to learn:
+      {% for skill in rm['missing_skills'].split(',') %}
+        <span class="chip chip-skill" style="font-size:11px">{{ skill.strip() }}</span>
+      {% endfor %}
+    </p>
+    {% endif %}
+    {% if rm['current_skills'] %}
+    <p style="font-size:12px;color:var(--muted)">
+      From:
+      {% for skill in rm['current_skills'].split(',') %}
+        <span class="chip" style="font-size:11px;background:var(--pale)">{{ skill.strip() }}</span>
+      {% endfor %}
+    </p>
+    {% endif %}
+    <p class="muted" style="font-size:11px">Saved {{ rm['created_at'][:10] }}</p>
+  </article>
+  {% endfor %}
+</div>
+
+<div style="margin-top:20px">
+  <a class="button secondary sm" href="/jobs">Explore jobs and generate a new roadmap</a>
+</div>
+
+{% else %}
+<div class="empty">
+  <h3>No roadmaps saved yet</h3>
+  <p style="margin-top:8px">Use the Skill Gap Analysis on the <a href="/jobs">Jobs page</a> to generate your first learning roadmap.</p>
+  <a class="button" href="/jobs" style="margin-top:14px">Explore jobs</a>
+</div>
+{% endif %}
+
+{% endblock %}

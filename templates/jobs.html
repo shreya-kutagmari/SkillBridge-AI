@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Explore opportunities | SkillBridge AI{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <p class="eyebrow">OPPORTUNITY DISCOVERY</p>
+  <h1>Explore opportunities</h1>
+  <p class="lead">Demo listings for Bengaluru — test the matching and gap analysis workflow.</p>
+</section>
+
+<!-- ── Smart job matcher ── -->
+<section class="tool-panel" id="matcher">
+  <div>
+    <p class="eyebrow">SMART JOB MATCHER</p>
+    <h2>Find roles that fit your skills</h2>
+    <p class="muted">Enter comma-separated skills below. The score shows the percentage of each job's required skills you already have — not a hiring decision.</p>
+    <p class="muted" style="margin-top:6px;font-size:12px">&#9432; Uploaded your resume on the home page? Your skills were pre-filled in the field automatically.</p>
+  </div>
+  <div>
+    <div class="form-row">
+      <input id="skillsInput" placeholder="e.g. Python, SQL, HTML, Git">
+      <button class="button" id="matchButton">Match jobs</button>
+    </div>
+    <div id="matchResults" class="match-results" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ── Skill gap analysis panel ── -->
+<section class="tool-panel" id="gap-analysis" style="margin-top:16px">
+  <div>
+    <p class="eyebrow">SKILL GAP ANALYSIS</p>
+    <h2>Compare your skills to a role</h2>
+    <p class="muted">Enter your skills and the skills required by the target role to get a structured learning roadmap with Foundation, Intermediate and Advanced stages.</p>
+  </div>
+  <div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label for="gapCurrent">Your current skills</label>
+      <input id="gapCurrent" placeholder="Python, SQL, Git">
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label for="gapRequired">Required skills for the role</label>
+      <input id="gapRequired" placeholder="Python, SQL, Flask, Docker, Git">
+    </div>
+    <button class="button" id="gapButton">Analyse skill gap</button>
+    <div class="alert" id="gapAlert"></div>
+    <div id="gapResults" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- ── Available listings ── -->
+<section class="section">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <h2 style="margin:0">Available demo listings</h2>
+    <input id="jobFilter" placeholder="Filter by title or skill…" style="width:260px;margin:0">
+  </div>
+  <div class="job-list">
+    {% for job in jobs %}
+    <article class="job-card job-card-static">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="tag">{{ job['job_type'] }}</span>
+          <h3 style="margin:0">{{ job['title'] }}</h3>
+        </div>
+        <p class="muted" style="margin-top:3px">{{ job['company'] }} &middot; {{ job['location'] }}</p>
+        <p class="desc">{{ job['description'] }}</p>
+        <p class="skills-text"><strong>Required skills:</strong>
+          {% for skill in job['skills'].split(',') %}
+            <span class="chip chip-skill" style="font-size:11px;padding:2px 8px">{{ skill.strip() }}</span>
+          {% endfor %}
+        </p>
+      </div>
+      <form method="post" action="{{ url_for('apply', job_id=job['id']) }}" class="save-form">
+        <button class="button secondary" type="submit" data-i18n-apply-btn>Save application</button>
+        <a class="button ghost sm" href="/dashboard?skills={{ job['skills'] }}&amp;name=">Analyse gap &rarr;</a>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ── Skill gap results (rendered by JS) ── -->
+<script>
+const gapBtn = document.getElementById("gapButton");
+if (gapBtn) {
+  gapBtn.addEventListener("click", async () => {
+    const current  = document.getElementById("gapCurrent").value;
+    const required = document.getElementById("gapRequired").value;
+    const alert    = document.getElementById("gapAlert");
+    const out      = document.getElementById("gapResults");
+    if (!required.trim()) { showAlert(alert, "error", "Please enter the required skills."); return; }
+    const origText = gapBtn.textContent;
+    setLoading(gapBtn, true, origText);
+    try {
+      const data = await postJSON("/api/roadmap", {current_skills: current, required_skills: required});
+      const coverClass = data.coverage >= 75 ? "coverage-high" : data.coverage >= 40 ? "coverage-mid" : "coverage-low";
+      const matchedChips = (data.matched || []).map(s => `<span class="chip chip-match">${escapeHTML(s)}</span>`).join("");
+      const missingChips = (data.missing || []).map(s => `<span class="chip chip-miss">${escapeHTML(s)}</span>`).join("");
+      const steps = (data.roadmap && data.roadmap.ordered_steps) ? data.roadmap.ordered_steps : [];
+      const stepsHtml = steps.map(step => `
+        <div class="roadmap-step">
+          <div class="roadmap-step-header">
+            <span class="stage-badge stage-${escapeHTML(step.stage.toLowerCase())}">${escapeHTML(step.stage)}</span>
+            <strong>${escapeHTML(step.skill)}</strong>
+            <span class="muted" style="margin-left:auto;font-size:12px">~${step.est_days} days</span>
+          </div>
+          <div class="roadmap-step-body">
+            <p><strong>Resource:</strong> ${escapeHTML(step.resource_type)} &mdash; ${escapeHTML(step.resource_hint)}</p>
+            <p><strong>Exercise:</strong> ${escapeHTML(step.exercise)}</p>
+          </div>
+        </div>`).join("");
+
+      out.innerHTML = `
+        <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--radius);padding:18px">
+          <p class="eyebrow" style="margin-bottom:8px">GAP ANALYSIS RESULT</p>
+          <p style="margin-bottom:4px"><strong>Coverage: ${data.coverage}%</strong></p>
+          <div class="coverage-bar-bg"><div class="coverage-bar-fill ${coverClass}" style="width:${data.coverage}%"></div></div>
+          <p style="margin:8px 0 4px;font-size:13px">${escapeHTML(data.summary || "")}</p>
+          ${matchedChips ? `<p style="margin-top:8px;font-size:13px"><strong>You have:</strong></p><div class="match-pills">${matchedChips}</div>` : ""}
+          ${missingChips ? `<p style="margin-top:8px;font-size:13px"><strong>Skills to build:</strong></p><div class="match-pills">${missingChips}</div>` : ""}
+          ${steps.length ? `<p class="eyebrow" style="margin:16px 0 8px">LEARNING ROADMAP (${steps.length} steps, ~${data.roadmap.total_est_days} days)</p><div class="roadmap-list">${stepsHtml}</div>` : ""}
+        </div>`;
+    } catch(e) {
+      showAlert(alert, "error", e.message);
+    } finally {
+      setLoading(gapBtn, false, origText);
+    }
+  });
+}
+</script>
+{% endblock %}
